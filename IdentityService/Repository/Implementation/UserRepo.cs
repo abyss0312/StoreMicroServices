@@ -1,4 +1,7 @@
-﻿using IdentityService.Models.Dtos;
+﻿using AutoMapper;
+using IdentityService.Data;
+using IdentityService.Data.Model;
+using IdentityService.Models.Dtos;
 using IdentityService.Models.Shared;
 using IdentityService.Repository.Interface;
 using Microsoft.IdentityModel.Tokens;
@@ -13,10 +16,14 @@ namespace IdentityService.Repository.Implementation
     {
         private User _user = new User();
         private readonly IConfiguration _conf;
+        private readonly IdentityDBContext _context;
+        private readonly IMapper _mapper;
 
-        public UserRepo(IConfiguration conf)
+        public UserRepo(IConfiguration conf, IdentityDBContext context, IMapper mapper)
         {
             _conf = conf;
+            _context = context;
+            _mapper = mapper;
         }
        
         public void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
@@ -31,7 +38,7 @@ namespace IdentityService.Repository.Implementation
         public string LoginUser(UserDtos request)
         {
             var token = "";
-           if(request.userName != _user.UserName)
+           if(request.userName != _user.Username)
             {
                 return "Wrong user";
             }
@@ -45,12 +52,16 @@ namespace IdentityService.Repository.Implementation
 
         public User RegisterUser(UserDtos request)
         {
-           
+            var response = new ResponseClient<string>();
+
+               
             CreatePasswordHash(request.password,out byte[] passwordHash, out byte[] passwordSalt);
 
-            _user.UserName = request.userName;
+            _user.Username = request.userName;
             _user.PasswordSalt = passwordSalt;
             _user.PasswordHash = passwordHash;
+
+            var res = _mapper.Map<Userinfo>(_user);
 
             return _user;
 
@@ -70,7 +81,7 @@ namespace IdentityService.Repository.Implementation
         {
             List<Claim> claim = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.Name, user.Username),
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_conf.GetSection("Jwt:Key").Value));

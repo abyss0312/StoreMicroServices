@@ -1,6 +1,7 @@
 ﻿using IdentityService.Models.Dtos;
 using IdentityService.Models.Shared;
 
+
 namespace IdentityService.Repository.Interface
 {
     public interface IUserRepo
